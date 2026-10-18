@@ -1,0 +1,156 @@
+{
+  "schema_id": "phys-demo/benchmark-solution-manifest/1",
+  "package_type": "benchmark-solution",
+  "derivation_id": "axion_dielectric_8a",
+  "framework_id": "dielectric_axion_demo",
+  "name": "Axion-to-Photon Conversion in a Dielectric (Problem 8a — gemini)",
+  "entry_points": {
+    "primary": "axion.OrderedResults",
+    "secondary": "axion.SkeletonNR"
+  },
+  "problem": {
+    "benchmark": "arXiv:2610.16733v1",
+    "location": "App. A, Prob. 8(a) (A.8.1), eq. (A62); Box 2",
+    "fidelity": "problem-definition only; solutions appendix not consulted"
+  },
+  "regime": "zero-temperature non-magnetic solid dielectric, no external electric field, natural units hbar=c=1",
+  "conventions": {
+    "interaction": "L=-(g/4) a F Fdual, vertex validated against vacuum a->gg width g^2 m^3/64pi",
+    "rate": "single-axion disappearance rate Gamma=-ImPi/omega on shell (Caputo et al. convention)",
+    "response": "dressed longitudinal propagator D00=1/(q^2 eps_L); absorptive weight (2/q^2) Im[-1/eps_L]",
+    "photon": "outgoing transverse photon with |q|=n w in the given-n approximation; recoil neglected",
+    "photon_measure": "free-photon cut normalized as 2pi delta(q^2) with the 1/(2|q|) Jacobian; the given-n dispersion enters only in the on-shell relation; the stated model does not fix the in-medium spectral-density normalization (see limitation prefactor_normalization)"
+  },
+  "parameters": [
+    {"id": "g_agammagamma", "symbol": "g", "value": "1e-10", "unit_state": "explicit", "unit": "GeV^-1", "note": "= 1e-19 eV^-1 in natural units"},
+    {"id": "omega_p", "symbol": "wp", "value": "16.6", "unit_state": "explicit", "unit": "eV"},
+    {"id": "refractive_index", "symbol": "n", "value": "1.5", "unit_state": "dimensionless"},
+    {"id": "axion_velocity", "symbol": "v_a", "value": "1e-3", "unit_state": "dimensionless"},
+    {"id": "mass_case_1", "symbol": "m_a", "value": "25", "unit_state": "explicit", "unit": "eV"},
+    {"id": "mass_case_2", "symbol": "m_a", "value": "15", "unit_state": "explicit", "unit": "eV"}
+  ],
+  "assumptions": [
+    "medium",
+    "coupling",
+    "units",
+    "response",
+    "photon",
+    "recoil",
+    "tzero",
+    "nrlimit"
+  ],
+  "requested_outputs": [
+    {"id": "gamma_nr_25", "description": "Gamma_NR for m_a = 25 eV in eV", "unit_state": "explicit", "unit": "eV"},
+    {"id": "gamma_nr_15", "description": "Gamma_NR for m_a = 15 eV in eV", "unit_state": "explicit", "unit": "eV"}
+  ],
+  "claims": [
+    {"id": "AX8-GENERAL", "title": "general closed-form rate Gamma(Ea,ka) with angular factor J(k)", "status": "analytical-hand-derived", "evidence_refs": []},
+    {"id": "AX8-NR", "title": "NR specialization with exact-rational skeleton and bounded finite-kappa correction", "status": "analytical-hand-derived", "evidence_refs": []},
+    {"id": "AX8-NUM25", "title": "Gamma_NR(25 eV) = 1.31e-41 eV", "status": "numerically-evaluated", "evidence_refs": []},
+    {"id": "AX8-NUM15", "title": "Gamma_NR(15 eV) = 0 (threshold-closed)", "status": "numerically-evaluated", "evidence_refs": []},
+    {"id": "AX8-REL", "title": "relativistic branch expression", "status": "analytical-hand-derived", "evidence_refs": []}
+  ],
+  "obligations": [
+    {"id": "D1", "statement": "tensor contraction giving |q x p|^2 vertex structure", "blocks": ["AX8-GENERAL"], "evidence_required": "independent Levi-Civita evaluation (analysis record)"},
+    {"id": "D2", "statement": "closed-form angular integral J(kappa)", "blocks": ["AX8-GENERAL"], "evidence_required": "independent numerical quadrature agreement"},
+    {"id": "D3", "statement": "spectral-weight identity (2/q^2) Im[-1/eps_L]", "blocks": ["AX8-GENERAL"], "evidence_required": "KKL response identity + D00 relation + sum-rule check"},
+    {"id": "D4", "statement": "threshold gate Ea > wp at T=0", "blocks": ["AX8-NUM15"], "evidence_required": "energy-conservation argument recorded in README"}
+  ],
+  "derivations": [
+    {
+      "id": "rate_formula",
+      "description": "Derivation of Gamma = g^2 wp qg^2 ka^2 J(kappa) / (16 pi Ea wg)",
+      "support": "UNSUPPORTED — delta-distribution calculus, tensor contraction, phase-space integration have no PhysMath rules; derivation is pen-and-paper recorded in README.md",
+      "steps": [
+        {"step": 1, "operation": "vertex_algebra", "description": "aFF_dual coupling gives amplitude proportional to g epsilon^{mu nu rho sigma} k1_rho k2_sigma", "executed_by": "solver-local"},
+        {"step": 2, "operation": "tensor_contraction", "description": "|M|^2 proportional to g^2 |q x p|^2 via Levi-Civita contraction", "executed_by": "solver-local"},
+        {"step": 3, "operation": "self_energy_cut", "description": "Rate from optical theorem: Gamma = -Im Pi(omega)/omega", "executed_by": "solver-local"},
+        {"step": 4, "operation": "medium_response_substitution", "description": "Insert Im[-1/eps_L] = (pi/2) wp delta(w-wp) for Im D00", "executed_by": "solver-local"},
+        {"step": 5, "operation": "delta_collapse_p0", "description": "p0 integral sets p0 = wp via medium delta", "executed_by": "solver-local"},
+        {"step": 6, "operation": "photon_shell_delta", "description": "q integral fixes |q| = n(Ea-wp) = qg via on-shell delta", "executed_by": "solver-local"},
+        {"step": 7, "operation": "angular_integral", "description": "dOmega integral gives ka^2 J(kappa) closed form", "executed_by": "solver-local"},
+        {"step": 8, "operation": "prefactor_assembly", "description": "combine all factors to Gamma = g^2 wp qg^2 ka^2 J(kappa) / (16 pi Ea wg)", "executed_by": "solver-local"}
+      ]
+    }
+  ],
+  "solver_local_computations": [
+    {
+      "id": "exact_rational_skeleton",
+      "algorithm": "exact-rational arithmetic via math/big.Rat",
+      "conventions": "NR kinematics: Ea = m(1+v^2/2), ka = mv; skeleton = g^2 wp qg^2 ka^2 / (6 Ea wg)",
+      "inputs": "g, wp, n, va, m_a (all exact rationals)",
+      "outputs": "skeleton rational value",
+      "independent_checks": "float64 cross-check via GammaGeneral at same kinematics",
+      "executed_by": "solver-local"
+    },
+    {
+      "id": "angular_correction",
+      "algorithm": "float64 evaluation of J(kappa)/(8pi/3)",
+      "conventions": "kappa = ka/qg; J(0)=8pi/3; J(1)=2pi (removable singularity)",
+      "inputs": "kappa (float64, derived from exact-rational kinematics)",
+      "outputs": "correction factor C (float64, documented |C-1| < 1e-5 at benchmark)",
+      "independent_checks": "Simpson quadrature comparison (TestPrefactorAssembly)",
+      "executed_by": "solver-local"
+    },
+    {
+      "id": "final_rate",
+      "algorithm": "skeleton_float64 * correction_factor",
+      "conventions": "rate in eV (natural units)",
+      "inputs": "skeleton (big.Rat -> float64), correction (float64)",
+      "outputs": "Gamma_NR in eV",
+      "independent_checks": "GammaGeneral cross-check; dimensional scaling test; unit-slip sensitivity test",
+      "executed_by": "solver-local"
+    }
+  ],
+  "infrastructure_use": [],
+  "deviations": [
+    {
+      "capability_sought": "exact rational arithmetic for parameter substitution",
+      "api_examined": "physmath.NewRational — constructs exact rational expressions in the PhysMath expression IR",
+      "reason": "The PhysMath NewRational API produces expression-IR nodes, not Go big.Rat values suitable for direct arithmetic. The problem requires numerical evaluation (division, multiplication of many rationals into a scalar result), which PhysMath expression IR does not execute — evaluation is architecturally deferred (Arch §25, Spec §23.2). stdlib big.Rat provides the identical exact-rational capability for direct arithmetic without requiring the expression IR.",
+      "local_alternative": "stdlib math/big.Rat with exact-decimal string constructors (ratFromString), performing the same exact arithmetic without the expression-IR layer"
+    },
+    {
+      "capability_sought": "delta-distribution calculus (collapsing delta(w-wp) under integration)",
+      "api_examined": "PhysMath rule registry (9 rules: EXPR-CANON-001 through EXPR-APPLY-001); integral/1 family",
+      "reason": "No PhysMath rule handles delta-distribution calculus or integration. The integral/1 family is REPRESENTATIONAL ONLY — no consuming rule exists. Delta-function collapse is a pen-and-paper operation with no PhysMath equivalent.",
+      "local_alternative": "hand derivation recorded in README.md step 5; result hardcoded into the closed-form rate formula"
+    },
+    {
+      "capability_sought": "tensor contraction with medium projector (Levi-Civita epsilon tensor)",
+      "api_examined": "PhysMath tensor/1 family; no contraction rule in the 9-rule registry",
+      "reason": "PhysMath represents tensors (tensor/1) but has no contraction rule. The Levi-Civita evaluation requires index contraction that is not executable.",
+      "local_alternative": "hand derivation recorded in README.md step 2; independently checked by numeric evaluation"
+    },
+    {
+      "capability_sought": "phase-space integration (angular integral over solid angle)",
+      "api_examined": "PhysMath integral/1 family; 9-rule registry",
+      "reason": "integral/1 is REPRESENTATIONAL ONLY — no rule evaluates integrals. The angular integral yielding J(kappa) must be computed outside PhysMath.",
+      "local_alternative": "closed-form J(kappa) function in axion.JClosed; independently verified by Simpson quadrature in TestPrefactorAssembly"
+    },
+    {
+      "capability_sought": "physical framework for axion electrodynamics",
+      "api_examined": "phys-lib gr.NewFramework — hardcodes phys-gr namespace; no axion-electrodynamics domain package exists",
+      "reason": "gr.NewFramework rejects non-GR assumption IDs (§14.3 anti-example). No phys-lib axion or dielectric package exists. Creating one would require human governance (Arch §27.5).",
+      "local_alternative": "demo-local Assumption/Source records in axion package; growth-gate note in README.md"
+    }
+  ],
+  "verification": {
+    "executed": "exact-rational parameter substitution and skeleton arithmetic; float64 closed-form evaluation; end-to-end phase-space assembly quadrature against the closed form under the documented convention; kappa=1 removable-singularity limit and domain-guard behavior; replayed nothing (no PhysMath derivations: delta-collapse, tensor contraction, and phase-space integration are unsupported by the rule registry)",
+    "represented_only": "analytical derivation steps, source mapping, assumption records, response model, normalization-convention statement, threshold reasoning"
+  },
+  "limitations": [
+    {"id": "no_engine_execution", "statement": "No PhysMath rule executes any derivation step; the rule registry has no delta-distribution, tensor-contraction-with-projector, or phase-space-integration operation. Arithmetic is exact-rational Go, documented as numerical evaluation, not engine proof."},
+    {"id": "model_response", "statement": "The q-independent plasmon-pole response is given by the problem; real materials have continua, gaps, dispersion, and local-field effects."},
+    {"id": "prefactor_normalization", "statement": "The rate prefactor 1/(16pi) is audited and reproduced by a cut/spectral-density assembly calibrated on the vacuum width (see README 'Assembly audit'), but the stated model fixes neither the in-medium photon spectral-density normalization nor, equivalently, one power of n. The quoted 1.31e-41 eV is conditional on the adopted convention (free massless cut 2pi delta(q^2) with the given-n dispersion in the on-shell relation); standard alternatives give 1/n ~ 0.67x or n = 1.5x the quoted value (8.7e-42 or 2.0e-41 eV), and the model as stated does not select among them."},
+    {"id": "threshold_zero", "statement": "The 15 eV result is exactly 0 by T=0 kinematics within the model, not by a computed cancellation."},
+    {"id": "no_empirical_claim", "statement": "No observational or experimental consequences are represented or claimed."}
+  ],
+  "literature": [
+    {"cite": "arXiv:2610.16733v1", "establishes": "problem definition only", "status": "read"},
+    {"cite": "Caputo-Millar-Vitagliano, arXiv:2005.00078", "establishes": "self-energy to rate method; narrow-width delta pattern", "status": "read"},
+    {"cite": "Knapen-Kozaczuk-Lin, arXiv:2101.08275", "establishes": "density response to loss-function identity; loss function as inclusive excitation rate", "status": "read"}
+  ],
+  "conformance_status": "CONFORMANT",
+  "declared_gaps": []
+}

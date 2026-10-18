@@ -1,0 +1,61 @@
+{
+  "schema_version": "1",
+  "artifact_type": "derivation",
+  "derivation_id": "axion_dielectric_8a",
+  "framework_id": "dielectric_axion_demo",
+  "name": "Axion-to-Photon Conversion in a Dielectric (Problem 8a reference)",
+  "entry_points": {
+    "primary": "axion.OrderedResults",
+    "secondary": "axion.SkeletonNR"
+  },
+  "problem_source": {
+    "benchmark": "arXiv:2610.16733v1",
+    "location": "App. A, Prob. 8(a) (A.8.1), eq. (A62); Box 2",
+    "fidelity": "problem-definition only; solutions appendix not consulted"
+  },
+  "regime": "zero-temperature non-magnetic solid dielectric, no external electric field, natural units hbar=c=1",
+  "conventions": {
+    "interaction": "L=-(g/4) a F Fdual, vertex validated against vacuum a->gg width g^2 m^3/64pi",
+    "rate": "single-axion disappearance rate Gamma=-ImPi/omega on shell (Caputo et al. convention)",
+    "response": "dressed longitudinal propagator D00=1/(q^2 eps_L); absorptive weight (2/q^2) Im[-1/eps_L]",
+    "photon": "outgoing transverse photon with |q|=n w in the given-n approximation; recoil neglected"
+  },
+  "claims": [
+    {"id": "AX8-GENERAL", "title": "general closed-form rate Gamma(Ea,ka) with angular factor J(k)", "status": "analytical-hand-derived", "evidence_refs": []},
+    {"id": "AX8-NR", "title": "NR specialization with exact-rational skeleton and bounded finite-kappa correction", "status": "analytical-hand-derived", "evidence_refs": []},
+    {"id": "AX8-NUM25", "title": "Gamma_NR(25 eV) = 1.31e-41 eV", "status": "numerically-evaluated", "evidence_refs": []},
+    {"id": "AX8-NUM15", "title": "Gamma_NR(15 eV) = 0 (threshold-closed)", "status": "numerically-evaluated", "evidence_refs": []},
+    {"id": "AX8-REL", "title": "relativistic branch expression", "status": "analytical-hand-derived", "evidence_refs": []}
+  ],
+  "obligations": [
+    {"id": "D1", "statement": "tensor contraction giving |q x p|^2 vertex structure", "blocks": ["AX8-GENERAL"], "evidence_required": "independent Levi-Civita evaluation (analysis record)"},
+    {"id": "D2", "statement": "closed-form angular integral J(kappa)", "blocks": ["AX8-GENERAL"], "evidence_required": "independent numerical quadrature agreement"},
+    {"id": "D3", "statement": "spectral-weight identity (2/q^2) Im[-1/eps_L]", "blocks": ["AX8-GENERAL"], "evidence_required": "KKL response identity + D00 relation + sum-rule check"},
+    {"id": "D4", "statement": "threshold gate Ea > wp at T=0", "blocks": ["AX8-NUM15"], "evidence_required": "energy-conservation argument recorded in README"}
+  ],
+  "assumptions": [
+    "medium",
+    "coupling",
+    "units",
+    "response",
+    "photon",
+    "recoil",
+    "tzero",
+    "nrlimit"
+  ],
+  "verification": {
+    "executed": "exact-rational parameter substitution and skeleton arithmetic; float64 closed-form evaluation; replayed nothing (no PhysMath derivations: delta-collapse, tensor contraction, and phase-space integration are unsupported by the rule registry)",
+    "represented_only": "analytical derivation steps, source mapping, assumption records, response model, threshold reasoning"
+  },
+  "limitations": [
+    {"id": "no_engine_execution", "statement": "No PhysMath rule executes any derivation step; the rule registry has no delta-distribution, tensor-contraction-with-projector, or phase-space-integration operation. Arithmetic is exact-rational Go, documented as numerical evaluation, not engine proof."},
+    {"id": "model_response", "statement": "The q-independent plasmon-pole response is given by the problem; real materials have continua, gaps, dispersion, and local-field effects."},
+    {"id": "threshold_zero", "statement": "The 15 eV result is exactly 0 by T=0 kinematics within the model, not by a computed cancellation."},
+    {"id": "no_empirical_claim", "statement": "No observational or experimental consequences are represented or claimed."}
+  ],
+  "literature": [
+    {"cite": "arXiv:2610.16733v1", "establishes": "problem definition only", "status": "read"},
+    {"cite": "Caputo-Millar-Vitagliano, arXiv:2005.00078", "establishes": "self-energy to rate method; narrow-width delta pattern", "status": "read"},
+    {"cite": "Knapen-Kozaczuk-Lin, arXiv:2101.08275", "establishes": "density response to loss-function identity; loss function as inclusive excitation rate", "status": "read"}
+  ]
+}
