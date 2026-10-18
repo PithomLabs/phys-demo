@@ -1,0 +1,236 @@
+package axion
+
+import (
+	"math"
+	"math/big"
+)
+
+// ---------------------------------------------------------------------------
+// Problem records
+// ---------------------------------------------------------------------------
+
+// Assumption is one demo-local physical assumption with its role.
+// These are records, not enforced premises: nothing in this package
+// discharges them.
+type Assumption struct {
+	ID        string
+	Statement string
+}
+
+// Assumptions returns the closed assumption set for this problem.
+func Assumptions() []Assumption {
+	return []Assumption{
+		{ID: "medium", Statement: "conventional solid-state dielectric: non-magnetic (mu=1), zero temperature, no external electric field"},
+		{ID: "coupling", Statement: "axion interacts only via L=-(g/4) a F Fdual with vertex validated against the vacuum a->gg width g^2 m^3/64pi"},
+		{ID: "units", Statement: "natural units hbar=c=1; all quantities in eV"},
+		{ID: "response", Statement: "longitudinal response given by the plasmon-pole model Im[-1/eps_L]=(pi/2) wp delta(w-wp); transverse medium response absent from the model"},
+		{ID: "photon", Statement: "outgoing real photon is transverse with dispersion |q|=n w in the given-n approximation"},
+		{ID: "recoil", Statement: "medium recoil energy neglected (q^2/2M_ion ~ 1e-9 eV); momentum conserved exactly"},
+		{ID: "tzero", Statement: "T=0: detailed-balance factor -> Theta(w); the medium can only absorb energy"},
+		{ID: "nrlimit", Statement: "NR kinematics Ea=m(1+v^2/2), ka=m v (consistent non-relativistic truncation; remainder vs the exact on-shell pair is O(v^2) ~ 1e-6 relative in the rate)"},
+	}
+}
+
+// Source records a literature source with its fidelity tag and the
+// exact role it plays. Tags: problem-definition, method, response,
+// identity (standard textbook identity), background.
+type Source struct {
+	ID       string
+	Cite     string
+	Location string
+	Fidelity string
+	Role     string
+}
+
+// Sources returns the source register. The benchmark defines the
+// problem; it is never a substitute for the derivation.
+func Sources() []Source {
+	return []Source{
+		{ID: "benchmark", Cite: "arXiv:2610.16733v1", Location: "App. A, Prob. 8(a) (A.8.1), eq. (A62); Box 2",
+			Fidelity: "problem-definition", Role: "problem statement, parameters, response model, required output order"},
+		{ID: "caputo", Cite: "Caputo-Millar-Vitagliano, arXiv:2005.00078 (PRD 101, 123004)", Location: "Sec. II, eqs. (2)-(4), App. A",
+			Fidelity: "method", Role: "self-energy to rate template ImPi=-wG; narrow-width delta reduction pattern; vertex-factor care"},
+		{ID: "kkl", Cite: "Knapen-Kozaczuk-Lin, arXiv:2101.08275 (PRD 104, 015031)", Location: "Sec. II, eqs. (5)-(6), (13)",
+			Fidelity: "response", Role: "density-response to loss-function identity S=(k^2/2pi al)/(1-e^-bw) Im[-1/eps_L]; loss function as inclusive excitation rate"},
+		{ID: "jackson", Cite: "Jackson, Classical Electrodynamics (3rd ed.)", Location: "energy-loss chapter (charged-particle loss via Im[-1/eps])",
+			Fidelity: "identity", Role: "standard longitudinal propagator D00=1/(q^2 eps_L) and loss-function reading"},
+		{ID: "liang", Cite: "Liang et al., arXiv:2608.20715", Location: "bulk plasmon regime discussion",
+			Fidelity: "background", Role: "supports neglecting transverse medium response (4-6 orders down)"},
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Parameters (exact decimals; g converted GeV^-1 -> eV^-1 by 1e-9)
+// ---------------------------------------------------------------------------
+
+// Params holds the benchmark parameters.
+type Params struct {
+	G      *big.Rat // axion-photon coupling, eV^-1 (=1e-19)
+	Wp     *big.Rat // plasmon pole, eV (=16.6)
+	N      *big.Rat // refractive index (=1.5)
+	Va     *big.Rat // axion velocity (=1e-3)
+	Mass25 *big.Rat // 25 eV case
+	Mass15 *big.Rat // 15 eV case
+}
+
+func ratFromString(s string) *big.Rat {
+	r, ok := new(big.Rat).SetString(s)
+	if !ok {
+		panic("axion: bad rational literal " + s)
+	}
+	return r
+}
+
+// BenchmarkParams returns the exact-decimal benchmark parameters.
+// g = 1e-10 GeV^-1 = 1e-10 * 1e-9 eV^-1 = 1e-19 eV^-1.
+func BenchmarkParams() Params {
+	return Params{
+		G:      ratFromString("1e-19"),
+		Wp:     ratFromString("16.6"),
+		N:      ratFromString("1.5"),
+		Va:     ratFromString("0.001"),
+		Mass25: ratFromString("25"),
+		Mass15: ratFromString("15"),
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Rate evaluation
+//
+// Derived closed form (README.md, hand derivation with independent
+// checks): for on-shell axion (Ea, ka) with Ea > wp,
+//
+//   Gamma = g^2 wp qg^2 ka^2 J(k) / (16 pi Ea wg),
+//
+// wg = Ea-wp, qg = n wg, k = ka/qg,
+// J(k) = 2pi[(1+k^2)/2k^2 - ((1-k^2)^2/4k^3) ln((1+k)/|1-k|)].
+// For Ea <= wp the rate is exactly 0 (threshold, T=0).
+//
+// NR specialization (J(0) = 8pi/3 exactly):
+//
+//   Gamma_NR = g^2 wp qg^2 ka^2 / (6 Ea wg)   [exact rational]
+//
+// with Ea = m(1+v^2/2), ka = m v. The full NR value is
+// Gamma_NR * C, C = J(k)/(8pi/3), evaluated in float64 with a
+// documented remainder bound |C-1| < 1e-5 at benchmark kinematics.
+// ---------------------------------------------------------------------------
+
+// band-limit helpers over *big.Rat.
+func ratMul(xs ...*big.Rat) *big.Rat {
+	acc := new(big.Rat).SetInt64(1)
+	for _, x := range xs {
+		acc.Mul(acc, x)
+	}
+	return acc
+}
+func ratQuo(a, b *big.Rat) *big.Rat { return new(big.Rat).Quo(a, b) }
+
+// NRKinematics returns (Ea, ka) under the documented O(v^2)
+// non-relativistic truncation: p = m v, E = m + p^2/2m.
+func NRKinematics(m, v *big.Rat) (Ea, ka *big.Rat) {
+	v2 := ratMul(v, v)
+	half := new(big.Rat).SetFrac64(1, 2)
+	Ea = new(big.Rat).Add(m, ratMul(m, v2, half))
+	ka = ratMul(m, v)
+	return Ea, ka
+}
+
+// Allowed reports whether conversion is kinematically possible.
+func Allowed(Ea, wp *big.Rat) bool { return Ea.Cmp(wp) > 0 }
+
+// SkeletonNR evaluates the exact-rational NR-limit skeleton
+// g^2 wp qg^2 ka^2 / (6 Ea wg). No pi, no log: fully exact.
+func SkeletonNR(p Params, m *big.Rat) (*big.Rat, bool) {
+	Ea, ka := NRKinematics(m, p.Va)
+	if !Allowed(Ea, p.Wp) {
+		return new(big.Rat), false
+	}
+	wg := new(big.Rat).Sub(Ea, p.Wp)
+	qg := ratMul(p.N, wg)
+	num := ratMul(p.G, p.G, p.Wp, qg, qg, ka, ka)
+	den := ratMul(new(big.Rat).SetInt64(6), Ea, wg)
+	return ratQuo(num, den), true
+}
+
+// JClosed evaluates the closed-form angular factor J(kappa) in
+// float64. Pure numerical evaluation, not a PhysMath execution.
+func JClosed(kappa float64) float64 {
+	if kappa == 0 {
+		return 8 * math.Pi / 3
+	}
+	k2 := kappa * kappa
+	return 2 * math.Pi * ((1+k2)/(2*k2) -
+		((1-k2)*(1-k2)/(4*k2*kappa))*math.Log((1+kappa)/math.Abs(1-kappa)))
+}
+
+// CorrectionNR returns J(k)/(8pi/3) for the NR kinematics.
+func CorrectionNR(p Params, m *big.Rat) (float64, bool) {
+	Ea, ka := NRKinematics(m, p.Va)
+	if !Allowed(Ea, p.Wp) {
+		return 0, false
+	}
+	wg := new(big.Rat).Sub(Ea, p.Wp)
+	qg := ratMul(p.N, wg)
+	kf, _ := new(big.Rat).Quo(ka, qg).Float64()
+	return JClosed(kf) / (8 * math.Pi / 3), true
+}
+
+// GammaNR returns the full NR rate in eV (float64) and whether the
+// channel is open. Case (2) is closed: returns (0, false).
+func GammaNR(p Params, m *big.Rat) (float64, bool) {
+	s, ok := SkeletonNR(p, m)
+	if !ok {
+		return 0, false
+	}
+	c, ok := CorrectionNR(p, m)
+	if !ok {
+		return 0, false
+	}
+	sf, _ := s.Float64()
+	return sf * c, true
+}
+
+// GammaGeneral evaluates the general (Ea, ka) closed form in float64.
+// Caller supplies an on-shell pair; the threshold gate applies.
+func GammaGeneral(g, wp, n, Ea, ka float64) (float64, bool) {
+	if !(Ea > wp) {
+		return 0, false
+	}
+	wg := Ea - wp
+	qg := n * wg
+	kappa := ka / qg
+	J := JClosed(kappa)
+	return g * g * wp * qg * qg * ka * ka * J / (16 * math.Pi * Ea * wg), true
+}
+
+// ResponseStrength returns the (pi/2)*wp prefactor of the
+// plasmon-pole response model (A62). Pinned by tests: the rate
+// prefactor inherits this normalization.
+func ResponseStrength(p Params) float64 {
+	wp, _ := p.Wp.Float64()
+	return math.Pi / 2 * wp
+}
+
+// RatString renders a *big.Rat in scientific form with the given
+// significant digits (for the completion report, not a proof).
+func RatString(r *big.Rat, digits int) string {
+	f := new(big.Float).SetPrec(128).SetRat(r)
+	return f.Text('e', digits)
+}
+
+// CheckResult bundles one mass case outcome in required order.
+type CheckResult struct {
+	MassEV string
+	Open   bool
+	RateEV float64
+}
+
+// OrderedResults returns [(1) 25 eV, (2) 15 eV] as required.
+func OrderedResults(p Params) [2]CheckResult {
+	out := [2]CheckResult{}
+	for i, m := range []*big.Rat{p.Mass25, p.Mass15} {
+		rate, ok := GammaNR(p, m)
+		out[i] = CheckResult{MassEV: m.RatString(), Open: ok, RateEV: rate}
+	}
+	return out
+}

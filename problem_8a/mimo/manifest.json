@@ -1,0 +1,270 @@
+{
+  "schema_id": "phys-demo/benchmark-solution-manifest/1",
+  "package_type": "benchmark-solution",
+  "package_id": "axion-dielectric-8a-mimo",
+  "problem": {
+    "benchmark": "arXiv:2610.16733v1 (TheoPhysEval)",
+    "location": "Appendix A, Problem 8(a); dielectric response eq. (A62)",
+    "fidelity": "problem-definition only: problem.md preserved verbatim (SHA-256 7e79f2fc516cc1a5eca23efd8e1af9bb649c0b0d6805792f4dfa7b8f880a0263) and solved by independent derivation from eq. (A62); the solutions appendix and all sibling solution folders were NOT consulted; no value, code, or answer was taken from another agent or any folder (problem.md instruction honored). Author exposure limited to protocol-level structure knowledge from the earlier workflow audit, disclosed in README limitations.",
+    "requested_outputs": [
+      "General conversion rate Gamma(E_a, k_a) for relativistic and non-relativistic axions, expressed via the dielectric function epsilon of the medium",
+      "(1) Gamma_NR for m_a = 25 eV and v_a = 1e-3, in eV",
+      "(2) Gamma_NR for m_a = 15 eV and v_a = 1e-3, in eV"
+    ]
+  },
+  "parameters": [
+    {"symbol": "g", "value": "1e-19 (converted exactly from the given 1e-10 GeV^-1)", "unit_state": "explicit", "unit": "eV^-1"},
+    {"symbol": "omega_p", "value": "16.6 (= 83/5)", "unit_state": "explicit", "unit": "eV"},
+    {"symbol": "n", "value": "1.5 (= 3/2)", "unit_state": "dimensionless"},
+    {"symbol": "v_a", "value": "1e-3", "unit_state": "dimensionless"},
+    {"symbol": "m", "value": "25 (case 1)", "unit_state": "explicit", "unit": "eV"},
+    {"symbol": "m", "value": "15 (case 2)", "unit_state": "explicit", "unit": "eV"}
+  ],
+  "regime": "Zero-temperature conventional non-magnetic dielectric, no external electric field; axion coupled only via a F F-tilde; requested evaluations are non-relativistic (v_a = 1e-3 << 1) above the plasmon threshold E_a > omega_p or exactly at its boundary; the general relativistic rate formula is retained as requested output 1.",
+  "conventions": {
+    "natural_units": "hbar = c = 1; all quantities in eV",
+    "coupling": "g = g_(a gamma gamma) = 1e-10 GeV^-1 converted exactly to 1e-19 eV^-1 (solver-local conversion, unit-tested)",
+    "dispersion": "in-medium photon on shell q_gamma = n * omega_gamma with the given refractive index n (given-n approximation); energy conservation omega_gamma = E_a - omega_p",
+    "measure": "photon final-state measure taken with the free-photon cut 2*pi*delta(q_gamma^2); the overall normalization of the rate follows from this choice; a residual one-power-of-n ambiguity relative to medium-modified phase-space conventions is recorded as a limitation (PROTOCOL 14.4, decision G-11), not resolved",
+    "plasmon_response": "Im[-1/epsilon_L(omega,q)] = (pi/2)*omega_p*delta(omega - omega_p) (problem eq. A62): plasmon pole at omega = omega_p",
+    "j_kappa": "J(kappa) = 2*pi*[(1+kappa^2)/(2*kappa^2) - (1-kappa^2)^2/(4*kappa^3)*ln((1+kappa)/|1-kappa|)], kappa = k_a/q_gamma; hand-derived limits J(0) = 8*pi/3 and J(1) = 2*pi, checked solver-locally against the closed form",
+    "nr_limit": "E_a = m at leading order in v_a inside the NR prefactor (kinetic corrections O(v_a^2) ~ 5e-7 relative, below displayed precision; convention-insensitivity tested); the threshold gate is the exact rational test m > omega_p, which implies the physical condition E_a = m*(1+v_a^2/2) > omega_p; the razor-thin window omega_p/(1+v_a^2/2) < m <= omega_p (width O(v_a^2*omega_p) ~ 8 meV) where the exact kinematics is open but the leading-order prefactor (m - omega_p) is invalid is excluded by that same gate; no requested case lies inside it"
+  },
+  "assumptions": [
+    {"id": "medium_nonmagnetic", "statement": "The medium is a conventional non-magnetic solid-state material (mu = 1)."},
+    {"id": "zero_temperature", "statement": "The medium is at zero temperature; no thermal populations enter the response."},
+    {"id": "no_external_field", "statement": "There is no external electric field."},
+    {"id": "axion_coupling_only", "statement": "The axion interacts only via the a F F-tilde coupling to photons."},
+    {"id": "dielectric_response", "statement": "The medium enters solely through the longitudinal dielectric function epsilon_L with the plasmon-pole response (A62)."},
+    {"id": "definite_axion_mass", "statement": "Each evaluated case has a definite axion mass (25 eV, 15 eV) at the common velocity v_a = 1e-3."}
+  ],
+  "capability_audit": {
+    "supported": [
+      "physmath.NewRational - exact-rational construction of every parameter [reused]",
+      "artifact.ComputeRef - content-addressed artifact identity via the physmath Store [reused]",
+      "physmath.EncodeRelationBody with the expression/1, function/1, relation/1 and derivation/1 families - durable representation of the rate equations [reused]",
+      "physmath.Apply with EXPR-SUBSTITUTE-001 and EXPR-SIMPLIFY-001 (closed registry, exactly nine rules) - parameter substitution and exact rational folding [reused]",
+      "physmath.Replay - byte-exact replay of the recorded two-step derivation [reused]"
+    ],
+    "partial": [
+      "EXPR-SIMPLIFY-001: closed rewrite list only (no distributivity, factorization, or identities); sufficient here because the substituted tree is all-rational"
+    ],
+    "representational_only": [
+      "relation/1 schematic general relativistic rate with J(kappa) and Theta gate - minted, no rule evaluates it",
+      "integral/1 - family exists, no consuming rule in the registry"
+    ],
+    "deferred": [
+      "numerical execution (Spec 0.4/23.2, Arch 25) - all float64 work is solver-local",
+      "dimensional semantics (Arch 32.2 open) - units are metadata only per PROTOCOL 9.1"
+    ],
+    "unavailable": [
+      "delta-distributions - no family and no rule represents or rewrites them",
+      "limits and asymptotic evaluation - no rule among the nine",
+      "Heaviside/step-function rules - the threshold gate is solver-local",
+      "axion/QED phys-* framework - none exists; new phys-* admission is a human governance decision (Arch 27.5)"
+    ]
+  },
+  "derivations": [
+    {
+      "id": "general_rate_derivation",
+      "support": "REPRESENTATIONAL ONLY",
+      "executed_rules": [],
+      "reason": "Deriving Gamma(E_a,k_a) from the a F F-tilde coupling with the plasmon-pole response (A62) requires delta-collapse, tensor contraction with the medium projector, and a phase-space integral; the closed registry has no delta-distribution or integration rule (delta: capability UNAVAILABLE; integral/1: no consuming rule). The formula is hand-derived in the README and minted as a schematic relation/1; it is never claimed executable."
+    },
+    {
+      "id": "nr_limit_specialization",
+      "support": "REPRESENTATIONAL ONLY",
+      "executed_rules": [],
+      "reason": "The kappa -> 0 limit J(0) = 8*pi/3 and the leading-order NR prefactor are asymptotic manipulations with no limit or series rule among the nine; hand-derived in the README (series expansion shown) and checked solver-locally against the closed-form J."
+    },
+    {
+      "id": "gamma_nr_parameter_substitution",
+      "support": "SUPPORTED",
+      "executed_rules": ["EXPR-SUBSTITUTE-001", "EXPR-SIMPLIFY-001"],
+      "reason": "Substituting the five exact rational parameters into the bound-symbol NR formula and folding the all-rational tree to a single reduced Rational is executed by the closed registry and replayed byte-exactly by physmath.Replay (TestInfraDerivationReplay)."
+    },
+    {
+      "id": "threshold_gate",
+      "support": "UNSUPPORTED",
+      "executed_rules": [],
+      "reason": "The Heaviside Theta has no rule among the nine (no comparison or step rule); the gate is an exact solver-local big.Rat comparison (axion.GammaNRExact: m > omega_p, implying the physical E_a > omega_p) with boundary and NR-window tests in protocol/derivation_test.go."
+    }
+  ],
+  "infrastructure_use": [
+    {
+      "concern": "exact-rational encoding of every problem parameter",
+      "library": "phys-math",
+      "api_symbol": "physmath.NewRational",
+      "code_path": "representation/representation.go:MintNRInputs",
+      "test": "TestInfraRationalEncoding",
+      "result": "five exact rational expression/1 artifacts (1/10^19, 83/5, 3/2, 25, 1/1000) minted deterministically; rebuilds are byte-identical and feed the substitution step",
+      "limitations": "value encoding only; unit semantics are metadata (deviation DEV-UNITS); no dimensional validation is performed"
+    },
+    {
+      "concern": "content-addressed identity of the minted derivation artifact",
+      "library": "phys-artifact",
+      "api_symbol": "artifact.ComputeRef",
+      "code_path": "representation/representation.go:VerifyContentAddress",
+      "test": "TestInfraArtifactIdentity",
+      "result": "the derivation/1 artifact reference is re-derived from its canonical payload via artifact.ComputeRef and equals the store-minted reference, which then resolves",
+      "limitations": "identity and integrity only; says nothing about semantic correctness of the payload"
+    },
+    {
+      "concern": "execution of the closed rule registry on the substituted formula",
+      "library": "phys-math",
+      "api_symbol": "physmath.Apply",
+      "code_path": "representation/representation.go:BuildNRDerivation",
+      "test": "TestInfraDerivationReplay",
+      "result": "EXPR-SUBSTITUTE-001 then EXPR-SIMPLIFY-001 executed; the folded output is the single reduced Rational 5229/(4*10^44)",
+      "limitations": "exact rational folding only; EXPR-SIMPLIFY-001 is PARTIALLY SUPPORTED (closed rewrite list)"
+    },
+    {
+      "concern": "durable representation of the general rate equation",
+      "library": "phys-math",
+      "api_symbol": "physmath.EncodeRelationBody",
+      "code_path": "representation/representation.go:MintGeneralRateRelation",
+      "test": "TestInfraRelationMinting",
+      "result": "relation/1 artifact minted for Gamma = g^2 omega_p q_gamma^2 k_a^2 J_kappa Theta (16 pi E_a omega_gamma)^-1",
+      "limitations": "schematic only (ephemeral symbols plus the registered constant pi); support state REPRESENTATIONAL ONLY - no rule evaluates it"
+    },
+    {
+      "concern": "byte-exact replay of the recorded derivation",
+      "library": "phys-math",
+      "api_symbol": "physmath.Replay",
+      "code_path": "representation/representation.go:ReplayCheck",
+      "test": "TestInfraDerivationReplay",
+      "result": "replay re-executes both steps from the bound premises and reproduces the declared outputs; a deliberately corrupted declared output is rejected as a mismatch",
+      "limitations": "establishes arithmetic reproducibility from bound premises only; the physical premise is represented, not protocol-established (PROTOCOL 10)"
+    }
+  ],
+  "deviations": [
+    {
+      "capability_sought": "framework-scoped assumption and theorem representation for axion plus medium-QED physics",
+      "api_examined": "phys-lib framework constructors (gr.NewFramework, PhysicalAssumption, PhysicalTheorem): inspected the namespace binding, which hardcodes phys-gr, and the framework-scope semantics of PhysLib",
+      "reason": "axion-to-photon conversion in a dielectric is not GR content; PROTOCOL 8.4 forbids forcing the GR framework onto non-GR physics, and no axion/QED phys-* exists (new phys-* admission is a human governance decision, Arch 27.5)",
+      "local_alternative": "demo-local assumptions[] records in this manifest plus a recorded README section; no phys-lib import and no go.work entry for phys-lib"
+    },
+    {
+      "capability_sought": "executable derivation of the general rate formula (delta-collapse of the plasmon-pole response, tensor contraction, phase-space integration)",
+      "api_examined": "the closed rule registry (phys-math rules.go/families.go, exactly nine rules): EXPR-CANON-001, EXPR-SIMPLIFY-001, EXPR-SUBSTITUTE-001, RAT-NORMALIZE-001, DIFFERENTIATE-001, TOTAL-DERIVATIVE-001, EXPR-COMBINE-001, SELECT-BRANCH-001, EXPR-APPLY-001; plus integral/1, which has no consuming rule",
+      "reason": "delta-distributions have no representation at all (capability UNAVAILABLE) and integration is REPRESENTATIONAL ONLY; none of the nine rules can execute these analytic steps, and inventing a rule ID is forbidden (PROTOCOL 6/12)",
+      "local_alternative": "derivations[] entries general_rate_derivation and nr_limit_specialization with honest support states; the hand-derived formula written out in the README; internal consistency checks (dimensions, thresholds, limits, dual-path arithmetic) in the protocol tests"
+    },
+    {
+      "capability_sought": "executable kappa -> 0 asymptotic limit of J(kappa) (and the kappa -> 1 endpoint)",
+      "api_examined": "the closed rule registry: no limit, series, or asymptotic rule among the nine; EXPR-SIMPLIFY-001's closed rewrite list does not include series expansion",
+      "reason": "limits are capability UNAVAILABLE in Phase 1; the NR specialization needs J(0) = 8*pi/3, which no rule can evaluate",
+      "local_alternative": "hand-derived series J = 8*pi/3 - (8*pi/15)*kappa^2 + O(kappa^4) shown in the README; solver-local numeric checks of the closed form against the series and the J(1) = 2*pi endpoint (protocol.TestJSeriesAndLimits)"
+    },
+    {
+      "capability_sought": "numerical evaluation of the general rate and of J(kappa) at the problem parameters",
+      "api_examined": "the numerical boundary (Spec 0.4/23.2, Arch 25; PROTOCOL 9.2): confirmed there is no numerical API in PhysMath or PhysLib to examine, and that numerical execution is architecturally deferred",
+      "reason": "numerical execution is DEFERRED by architecture and PROTOCOL 9.2 forbids extending PhysMath into solvers to accommodate a benchmark",
+      "local_alternative": "solver-local float64 code in the axion package (J, GammaNRGeneralFloat), recorded as solver_local_computations and never attributed to Phys libraries"
+    },
+    {
+      "capability_sought": "dimensional validation of the GeV^-1 to eV^-1 coupling conversion and unit-carrying quantities",
+      "api_examined": "the No-Invention Matrix units row (Arch 32.2, open decision) and PROTOCOL 9.1 interim policy: PhysMath has no quantity, dimension, or unit types to examine",
+      "reason": "dimensional semantics remain an open architectural decision and are explicitly out of scope for this protocol (metadata-only units)",
+      "local_alternative": "unit_state metadata on every manifest.parameters[] entry plus the solver-local exact conversion and deliberate unit-slip test (protocol.TestUnitSlipSensitivity), attributed to package-local code per PROTOCOL 9.1"
+    }
+  ],
+  "solver_local_computations": [
+    {
+      "id": "sl_exact_gamma_nr_rational",
+      "algorithm": "exact big.Rat evaluation of Gamma_NR = g^2 omega_p n^2 (m - omega_p) m v_a^2 / 6 with the exact threshold gate E_a = m*(1+v_a^2/2) > omega_p",
+      "conventions": "stdlib math/big rational arithmetic; NR convention E_a = m in the prefactor (kinetic term kept exactly in the gate); display rounded to 3 significant figures via float64",
+      "inputs": "g = 1e-19 eV^-1, omega_p = 83/5 eV, n = 3/2, v_a = 1/1000, m in {25, 15} eV",
+      "outputs": "Gamma(25 eV) = 5229/(4*10^44) eV; Gamma(15 eV) = 0 eV (below threshold)",
+      "independent_checks": "dual path: physmath.Replay reproduces the identical rational from bound premises (protocol.TestReplayAgreesWithLocalExact); a third float64 path through the general formula with full J(kappa) agrees to better than 1e-4 relative (protocol.TestThreePathAgreement)",
+      "executed_by": "solver-local"
+    },
+    {
+      "id": "sl_general_formula_float",
+      "algorithm": "float64 evaluation of the general rate Gamma = g^2 omega_p q_gamma^2 k_a^2 J(kappa) / (16 pi E_a omega_gamma) with the full closed-form J and full kinematics",
+      "conventions": "IEEE-754 float64, natural units eV; kappa = k_a/q_gamma with q_gamma = n*omega_gamma; J evaluated by the closed form with documented endpoint conventions J(0) = 8 pi/3, J(1) = 2 pi",
+      "inputs": "same exact parameters; m = 25 eV and m = 15 eV",
+      "outputs": "float64 rates used only as an independent cross-check of the exact rational result and for the 3-significant-figure display",
+      "independent_checks": "agreement with the exact rational within 1e-4 relative; J closed form checked against its small-kappa series and the kappa -> 1 endpoint; monotonicity and NaN-freedom checked",
+      "executed_by": "solver-local"
+    },
+    {
+      "id": "sl_threshold_gate",
+      "algorithm": "exact big.Rat comparison m > omega_p implementing the leading-order Theta gate (the physical condition E_a = m*(1+v_a^2/2) > omega_p follows automatically; the razor window omega_p/(1+v_a^2/2) < m <= omega_p where the leading-order prefactor (m - omega_p) is invalid is excluded by the same gate)",
+      "conventions": "strict inequality m > omega_p; v_a = 1/1000 exact; no floating point involved",
+      "inputs": "m = 25 eV (above), m = 15 eV (below), plus masses around omega_p and inside the excluded NR-invalid window",
+      "outputs": "masses above omega_p proceed to the rate evaluation; at or below it the rate is exactly 0",
+      "independent_checks": "protocol.TestThresholdBehavior exercises masses above omega_p, below the exact kinematic boundary, and inside the excluded window; the absence of any Phys rule for the step is recorded as derivations[] threshold_gate (UNSUPPORTED)",
+      "executed_by": "solver-local"
+    },
+    {
+      "id": "sl_unit_conversion_g",
+      "algorithm": "exact rational conversion of the coupling: g[eV^-1] = g[GeV^-1] * 10^-9 (1 GeV = 10^9 eV)",
+      "conventions": "natural units, exact rational factor; no Phys unit engine exists (metadata-only policy, PROTOCOL 9.1)",
+      "inputs": "g = 1e-10 GeV^-1",
+      "outputs": "g = 1e-19 eV^-1",
+      "independent_checks": "protocol.TestUnitSlipSensitivity asserts the exact converted value and that deliberate wrong factors (10^-1, 10^9, and the 0.1 eV^-1 slip) are detected as mismatches of relative error >= 1e17",
+      "executed_by": "solver-local"
+    }
+  ],
+  "results": [
+    {
+      "id": "gamma_nr_m25ev",
+      "value": "1.31e-41 eV (exact rational 5229/(4*10^44) eV)",
+      "evidence_level": "Replayed/verified",
+      "evidence": "physmath.Replay re-executes EXPR-SUBSTITUTE-001 then EXPR-SIMPLIFY-001 from the bound premises (parameterized formula expression, declaring function, five exact rational inputs) and reproduces the declared rational byte-exactly (representation.ReplayCheck; TestInfraDerivationReplay; protocol.TestReplayAgreesWithLocalExact). The same value is obtained independently by solver-local exact arithmetic and agrees with the float64 general-formula evaluation to better than 1e-4 relative. Scope (PROTOCOL 10): replay establishes reproducibility of the recorded arithmetic steps under the closed rule registry; the rate formula itself is a hand derivation recorded as Represented, not established by protocol operations."
+    },
+    {
+      "id": "gamma_nr_m15ev",
+      "value": "0 eV (below the plasmon threshold: m = 15 eV < omega_p = 16.6 eV, and E_a = m(1+v_a^2/2) = 15.0000075 eV < omega_p)",
+      "evidence_level": "Executed",
+      "evidence": "solver-local exact big.Rat comparison implementing the leading-order Theta gate (axion.GammaNRExact: m > omega_p, implying E_a > omega_p; executed_by: solver-local; solver_local_computations sl_threshold_gate); threshold and NR-window boundary tests pass (protocol.TestThresholdBehavior). No Phys rule performs Heaviside steps: derivations[] threshold_gate is UNSUPPORTED, so no stronger Phys-attributable level exists for this claim."
+    }
+  ],
+  "limitations": [
+    "Replay verifies only the recorded substitution and folding steps under the closed rule registry; the rate formula itself is a hand derivation (derivations general_rate_derivation and nr_limit_specialization: REPRESENTATIONAL ONLY) and is not established by protocol operations.",
+    "prefactor_normalization: the photon final-state measure convention (free-photon cut 2*pi*delta(q_gamma^2) with on-shell q_gamma = n*omega_gamma) leaves a residual one-power-of-n ambiguity in the overall normalization relative to medium-modified phase-space conventions (recorded as decision G-11, PROTOCOL 14.4); stated, not resolved.",
+    "NR convention: E_a = m is used in the exact rational prefactor; kinetic corrections are O(v_a^2) ~ 5e-7 relative. Threshold gate: exact m > omega_p (implies the physical E_a > omega_p); the razor-thin window omega_p/(1+v_a^2/2) < m <= omega_p, width O(v_a^2*omega_p) ~ 8 meV, where the exact kinematics is open but the leading-order prefactor (m - omega_p) is invalid, is excluded by the same gate; no requested case lies inside it. Convention insensitivity is tested to better than 1e-5 relative (protocol.TestConventionInsensitivity).",
+    "The full closed-form J(kappa) is evaluated only solver-locally in float64; the exact rational results use the analytic limit J(0) = 8*pi/3, with kappa ~ 1.98e-3 so the O(kappa^2) correction ~ 4e-6 relative is below the displayed 3 significant figures.",
+    "Unit handling is metadata only (PROTOCOL 9.1): no dimensional semantics exist in Phys; the GeV^-1 to eV^-1 conversion is solver-local and unit-tested.",
+    "Author exposure: protocol-level structure of sibling solutions was known from the earlier workflow audit; no values, code, or answers from sibling folders were consulted. The derivation was reproduced from problem.md (A62) and anchored by internal consistency checks only.",
+    "phys-demo is not a git repository (decision item 12, PROTOCOL 2/13.1): this package cannot be revision-pinned; infrastructure revisions are recorded in the README.",
+    "No central Type-B validator exists (PROTOCOL 11.3 recorded limitation): conformance is enforced solely by this package's own manifest_test.go."
+  ],
+  "open_obligations": [
+    "The solutions appendix of arXiv:2610.16733v1 remains unconsulted by design (problem.md instruction); independent comparison against the published answer is an open verification step for a later, separate task.",
+    "A shared Type-B conformance checker is unauthorized and unimplemented (PROTOCOL 11.3); until one exists, per-package manifest_test.go validation is the whole enforcement story.",
+    "git initialization of phys-demo is deferred (decision item 12); until resolved, exact revisions cannot be pinned for this package.",
+    "phys-demo/scripts/test-all.sh maintains a hardcoded project list; adding problem_8a/mimo to its projects array (per the script's own documented add-a-project process) is deferred as an out-of-package one-line change; this package passes the script's exact per-project invocation (unset GOWORK && go test -count=1 ./...)."
+  ],
+  "declared_gaps": [
+    {
+      "gap_id": "GAP-NO-DISTRIBUTION-RULE",
+      "requirement": "A representable and rewritable delta-distribution object (family plus rule) for plasmon-pole responses",
+      "reason": "capability UNAVAILABLE: no family and no rule among the nine represents or rewrites delta distributions; the plasmon-pole collapse steps are recorded REPRESENTATIONAL ONLY and hand-derived in the README. Route if pursued: Growth Gate (Arch 30.2-30.3), pure-math capability owned by PhysMath - proposal only, not implemented here.",
+      "severity": "advisory"
+    },
+    {
+      "gap_id": "GAP-NO-INTEGRAL-RULE",
+      "requirement": "An executable consuming rule for the integral/1 family (phase-space integration)",
+      "reason": "capability REPRESENTATIONAL ONLY: integral/1 exists as a family but the closed registry has no consuming rule; the phase-space integral of the rate derivation is hand-derived. Route if pursued: Growth Gate, PhysMath ownership - proposal only.",
+      "severity": "advisory"
+    },
+    {
+      "gap_id": "GAP-NO-LIMIT-RULE",
+      "requirement": "Limit or asymptotic-series rules (needed for the kappa -> 0 evaluation of J)",
+      "reason": "capability UNAVAILABLE among the nine rules; J(0) = 8*pi/3 and the NR prefactor were hand-derived and are checked only solver-locally against the closed form.",
+      "severity": "advisory"
+    },
+    {
+      "gap_id": "GAP-NO-CENTRAL-VALIDATOR",
+      "requirement": "A shared Type-B manifest conformance checker reusable across phys-demo packages",
+      "reason": "recorded limitation (PROTOCOL 11.3, ADR 6): phys-lib/internal/manifestschema is repository-internal and must not be imported; a shared checker would be a separate unauthorized implementation. Per-package manifest_test.go is the whole enforcement story.",
+      "severity": "advisory"
+    }
+  ],
+  "entry_points": {
+    "primary": "axion.OrderedResults",
+    "secondary": "representation.ReplayCheck"
+  }
+}

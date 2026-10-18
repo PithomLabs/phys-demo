@@ -1,0 +1,48 @@
+{
+  "schema_version": "1",
+  "artifact_type": "derivation",
+  "derivation_id": "axion_photon_8a",
+  "framework_id": "standalone",
+  "name": "Axion-to-photon conversion in dielectric medium (TheoPhysEval 8a)",
+  "entry_points": {
+    "primary": "problem_8a.Build",
+    "secondary": "problem_8a.Verify"
+  },
+  "provenance_note": "Derived independently from TheoPhysEval arXiv:2610.16733v1 Appendix A Problem 8(a) equation (A62). Source parameters and equation text confirmed against rendered HTML source.",
+  "regime": "non-relativistic axion, zero-temperature non-magnetic dielectric, no external E-field, delta-function dielectric response",
+  "conventions": {
+    "coupling_normalization": "g_aγγ = 10^-10 GeV^-1 (natural units h=c=1)",
+    "dielectric_response": "Im[-1/ε_L(ω,q)] = (π/2) ω_p δ(ω-ω_p)",
+    "refractive_index": "n = 1.5 (constant)",
+    "units": "eV for frequency, energy, mass; GeV^-1 for coupling; v_a = 10^-3"
+  },
+  "target": "Rate Γ_NR (eV) for axion-to-photon conversion using specified delta response, evaluated numerically for m_a = 25 eV and 15 eV.",
+  "domain": "Conventional solid-state dielectric, spherical comoving domain not integrated numerically; delta-substitution analytical simplification only.",
+  "claims": [
+    {"id": "A8A-01", "title": "Rate formula derived from delta response", "status": "executed-fragment", "evidence_refs": ["RateFormulaRef", "DeltaSubstDerivRef"]},
+    {"id": "A8A-02", "title": "Numerical evaluation for m_a = 25 eV", "status": "independent-numerical", "evidence_refs": ["NumResult25Ref"]},
+    {"id": "A8A-03", "title": "Numerical evaluation for m_a = 15 eV", "status": "independent-numerical", "evidence_refs": ["NumResult15Ref"]},
+    {"id": "A8A-04", "title": "Relativistic vs non-relativistic branch distinction", "status": "represented-branch", "evidence_refs": []}
+  ],
+  "assumptions": [
+    "axion_interaction",
+    "medium_nonmagnetic_zeroT",
+    "delta_response_exact",
+    "no_external_E",
+    "refractive_index_constant",
+    "natural_units"
+  ],
+  "verification": {
+    "executed": "Expression encoding and structural checks for rate formula and delta substitution; numerical evaluation independently computed; replay of derivation inventory; assumption linkage verified.",
+    "represented_only": "Full spatial-averaging integral not executed numerically; empirical confirmation of rate; full relativistic branch numerical evaluation not independently recomputed beyond structural representation."
+  },
+  "limitations": [
+    {"id": "full_integral_unexecuted", "statement": "The full 3D spatial integration over the dielectric response is not executed; only the delta-substitution simplification is performed analytically."},
+    {"id": "status_is_metadata", "statement": "Claim statuses live in manifest metadata; Verify enforces replay and linkage, not scientific truth."},
+    {"id": "numerical_oracle", "statement": "Numerical results are computed by independent arithmetic code and compared to hand-derived expectations; they are corroboration, not proof of the full formula."},
+    {"id": "no_empirical_claim", "statement": "No observational or experimental consequence is claimed or represented."}
+  ],
+  "literature": [
+    {"cite": "TheoPhysEval arXiv:2610.16733v1 (Appendix A, Problem 8(a), Eq. A62)", "establishes": "Problem definition, equation (A62), parameter values, and expected numerical output order.", "status": "source-confirmed"}
+  ]
+}
